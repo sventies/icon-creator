@@ -4,6 +4,7 @@ import Buttons from "./buttons";
 import Shapes from "./shapes";
 import DraftShape from "./draftShape";
 import { createShape } from "./createShape";
+import useKeyPress from "./useKeyPress";
 
 interface Props {}
 
@@ -18,6 +19,7 @@ const IconCreator: FC<Props> = () => {
   const [tempI, setTempI] = useState<number>(0);
   const [hovered, setHovered] = useState<[number, number] | null>(null);
   const [startXY, setStartXY] = useState([0, 0]);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
 
   const shapes = temporalShapes[tempI] || [];
 
@@ -69,7 +71,42 @@ const IconCreator: FC<Props> = () => {
     }
   };
 
-  const onCopy = () => {
+  const esc = useKeyPress("Escape");
+  useEffect(() => {
+    if (esc) {
+      setDraftPoint(null);
+    }
+  }, [esc]);
+
+  const one = useKeyPress("1");
+  useEffect(() => {
+    if (one) {
+      setShapeMode("line");
+    }
+  }, [one]);
+
+  const two = useKeyPress("2");
+  useEffect(() => {
+    if (two) {
+      setShapeMode("circle");
+    }
+  }, [two]);
+
+  const three = useKeyPress("3");
+  useEffect(() => {
+    if (three) {
+      setShapeMode("rect");
+    }
+  }, [three]);
+
+  const four = useKeyPress("4");
+  useEffect(() => {
+    if (four) {
+      setShapeMode("eraser");
+    }
+  }, [four]);
+
+  const onCopy = async () => {
     const shapes = temporalShapes[tempI];
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width"${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}" fill="none" stroke="currentColor" stroke-width="${STROKE_WIDTH}" stroke-linecap="round" stroke-linejoin="round">
 ${shapes
@@ -84,7 +121,15 @@ ${shapes
   })
   .join("\n")}
 </svg>`;
-    navigator.clipboard.writeText(svg);
+    try {
+      await navigator.clipboard.writeText(svg);
+      setCopyStatus("success");
+    } catch (error) {
+      setCopyStatus("error");
+    }
+    setTimeout(() => {
+      setCopyStatus("idle");
+    }, 1000);
   };
 
   return (
@@ -98,6 +143,7 @@ ${shapes
           isFirst={tempI === 0}
           isLast={tempI === temporalShapes.length - 1}
           onCopy={onCopy}
+          copyStatus={copyStatus}
         />
       </div>
       <div
