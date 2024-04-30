@@ -82,34 +82,64 @@ const getDraft: (
 
 const IconCreator: FC<Props> = () => {
   const [shapeMode, setShapeMode] = useState<"line" | "circle" | "rect" | "pointer">("line");
-  const [draftPoint, Point] = useState<Point | null>(null);
-  const [lines, setLines] = useState<(Line | Circle | Rect)[]>([]);
+  const [draftPoint, setDraftPoint] = useState<Point | null>(null);
+  const [temporalShapes, setTemporalShapes] = useState<(Line | Circle | Rect)[][]>([[]]);
+  const [tempI, setTempI] = useState<number>(0);
   const [hovered, setHovered] = useState<[number, number] | null>(null);
   const [startXY, setStartXY] = useState([0, 0]);
 
+  const shapes = temporalShapes[tempI] || [];
+
   useEffect(() => {
-    Point(null);
+    setDraftPoint(null);
     setHovered(null);
   }, [shapeMode]);
 
   const finishShape = (i: number, j: number) => {
     if (!draftPoint) {
-      Point({ x1: i, y1: j });
+      setDraftPoint({ x1: i, y1: j });
       return;
     }
     const shape = getDraft(hovered, draftPoint, shapeMode);
-    if (shape) setLines((prev) => [...prev, shape]);
-    Point(null);
+    if (shape) {
+      setTemporalShapes((prev) => {
+        const newShapes = JSON.parse(JSON.stringify(shapes));
+        newShapes.push(shape);
+        return [...prev.slice(0, tempI + 1), newShapes];
+      });
+      setTempI((prev) => prev + 1);
+    }
+    setDraftPoint(null);
   };
 
   const draftShape = getDraft(hovered, draftPoint, shapeMode);
 
   const pointerEvents = shapeMode === "pointer" ? "all" : "none";
 
+  const onUndo = () =>
+    setTempI((prev) => {
+      if (prev === 0) return prev;
+      return prev - 1;
+    });
+
+  const onRedo = () => {
+    setTempI((prev) => {
+      if (prev === temporalShapes.length - 1) return prev;
+      return prev + 1;
+    });
+  };
+
   return (
     <>
       <div className="p-2 flex items-center">
-        <Buttons setShapeMode={setShapeMode} shapeMode={shapeMode} />
+        <Buttons
+          setShapeMode={setShapeMode}
+          shapeMode={shapeMode}
+          onUndo={onUndo}
+          onRedo={onRedo}
+          isFirst={tempI === 0}
+          isLast={tempI === temporalShapes.length - 1}
+        />
       </div>
       <div
         style={{
@@ -177,7 +207,7 @@ const IconCreator: FC<Props> = () => {
             ))
           )}
           <HelperShapes size={SIZE} array={ARRAY} strokeWidth={STROKE_WIDTH} />
-          {lines.map((line, k) =>
+          {shapes.map((line, k) =>
             line.type === "line" ? (
               <line {...line} key={k} style={{ pointerEvents }} className="stroke-black hover:stroke-blue-400" />
             ) : line.type === "circle" ? (
