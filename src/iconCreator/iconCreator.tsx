@@ -3,56 +3,13 @@ import HelperShapes from "./helperShapes";
 import Buttons from "./buttons";
 import Shapes from "./shapes";
 import DraftShape from "./draftShape";
+import { createShape } from "./createShape";
 
 interface Props {}
 
 const SIZE = 24;
 const STROKE_WIDTH = 2;
 const ARRAY = Array.from({ length: SIZE + 1 }, () => Array.from({ length: SIZE + 1 }, (_, j) => j));
-
-const getDraft: (hovered: [number, number] | null, draftPoint: Point | null, shapeMode: ShapeMode) => Shape | null = (
-  hovered,
-  draftPoint,
-  shapeMode
-) => {
-  if (!hovered) return null;
-  if (!draftPoint) {
-    switch (shapeMode) {
-      case "circle":
-      case "line":
-      case "rect":
-        return { type: "line" as const, x1: hovered[0], y1: hovered[1], x2: hovered[0], y2: hovered[1] };
-      default:
-        return null;
-    }
-  }
-
-  switch (shapeMode) {
-    case "line":
-      return { type: "line" as const, x1: draftPoint.x1, y1: draftPoint.y1, x2: hovered[0], y2: hovered[1] };
-    case "circle":
-      return {
-        type: "circle" as const,
-        cx: draftPoint.x1,
-        cy: draftPoint.y1,
-        r: Math.hypot(draftPoint.x1 - hovered[0], draftPoint.y1 - hovered[1]),
-      };
-    case "rect": {
-      const maxX = Math.max(hovered[0], draftPoint.x1);
-      const maxY = Math.max(hovered[1], draftPoint.y1);
-      const minX = Math.min(hovered[0], draftPoint.x1);
-      const minY = Math.min(hovered[1], draftPoint.y1);
-      return {
-        type: "rect" as const,
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-      };
-    }
-  }
-  return null;
-};
 
 const IconCreator: FC<Props> = () => {
   const [shapeMode, setShapeMode] = useState<ShapeMode>("line");
@@ -74,7 +31,7 @@ const IconCreator: FC<Props> = () => {
       setDraftPoint({ x1: i, y1: j });
       return;
     }
-    const shape = getDraft(hovered, draftPoint, shapeMode);
+    const shape = createShape(hovered, draftPoint, shapeMode);
     if (shape) {
       setTemporalShapes((prev) => {
         const newShapes = JSON.parse(JSON.stringify(shapes));
@@ -86,7 +43,7 @@ const IconCreator: FC<Props> = () => {
     setDraftPoint(null);
   };
 
-  const draftShape = getDraft(hovered, draftPoint, shapeMode);
+  const draftShape = createShape(hovered, draftPoint, shapeMode);
 
   const onUndo = () =>
     setTempI((prev) => {
@@ -230,6 +187,7 @@ ${shapes
                 strokeLinejoin="round"
               >
                 <Shapes shapes={shapes} shapeMode={shapeMode} onShapeClick={onShapeClick} />
+                <DraftShape draftShape={draftShape} />
               </svg>
             </div>
           </div>
