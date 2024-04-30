@@ -1,6 +1,5 @@
 import { FC, useEffect, useState } from "react";
 import HelperShapes from "./helperShapes";
-// import Button from "./buttons";
 import Buttons from "./buttons";
 
 interface Props {}
@@ -20,7 +19,7 @@ interface Circle {
   r: number;
 }
 
-interface DraftLine {
+interface Point {
   x1: number;
   y1: number;
 }
@@ -39,8 +38,8 @@ const ARRAY = Array.from({ length: SIZE + 1 }, () => Array.from({ length: SIZE +
 
 const getDraft: (
   hovered: [number, number] | null,
-  draftPoint: DraftLine | null,
-  shapeMode: "line" | "circle" | "rect"
+  draftPoint: Point | null,
+  shapeMode: "line" | "circle" | "rect" | "pointer"
 ) => Line | Circle | Rect | null = (hovered, draftPoint, shapeMode) => {
   if (!hovered) return null;
   if (!draftPoint) {
@@ -49,6 +48,8 @@ const getDraft: (
       case "line":
       case "rect":
         return { type: "line" as const, x1: hovered[0], y1: hovered[1], x2: hovered[0], y2: hovered[1] };
+      default:
+        return null;
     }
   }
 
@@ -76,43 +77,39 @@ const getDraft: (
       };
     }
   }
-
   return null;
 };
 
 const IconCreator: FC<Props> = () => {
-  const [shapeMode, setShapeMode] = useState<"line" | "circle" | "rect">("line");
-  const [draftPoint, setDraftPoint] = useState<DraftLine | null>(null);
+  const [shapeMode, setShapeMode] = useState<"line" | "circle" | "rect" | "pointer">("line");
+  const [draftPoint, Point] = useState<Point | null>(null);
   const [lines, setLines] = useState<(Line | Circle | Rect)[]>([]);
   const [hovered, setHovered] = useState<[number, number] | null>(null);
   const [startXY, setStartXY] = useState([0, 0]);
 
   useEffect(() => {
-    setDraftPoint(null);
+    Point(null);
     setHovered(null);
   }, [shapeMode]);
 
   const finishShape = (i: number, j: number) => {
     if (!draftPoint) {
-      setDraftPoint({ x1: i, y1: j });
+      Point({ x1: i, y1: j });
       return;
     }
     const shape = getDraft(hovered, draftPoint, shapeMode);
     if (shape) setLines((prev) => [...prev, shape]);
-    setDraftPoint(null);
+    Point(null);
   };
 
   const draftShape = getDraft(hovered, draftPoint, shapeMode);
 
+  const pointerEvents = shapeMode === "pointer" ? "all" : "none";
+
   return (
     <>
-      <div>
+      <div className="p-2 flex items-center">
         <Buttons setShapeMode={setShapeMode} shapeMode={shapeMode} />
-        {/* <div className="flex flex-row">
-          <Button onClick={() => setShapeMode("line")}>L</Button>
-          <Button onClick={() => setShapeMode("circle")}>C</Button>
-          <Button onClick={() => setShapeMode("rect")}>R</Button>
-        </div> */}
       </div>
       <div
         style={{
@@ -182,16 +179,19 @@ const IconCreator: FC<Props> = () => {
           <HelperShapes size={SIZE} array={ARRAY} strokeWidth={STROKE_WIDTH} />
           {lines.map((line, k) =>
             line.type === "line" ? (
-              <line {...line} stroke="black" key={k} style={{ pointerEvents: "none" }} />
+              <line {...line} key={k} style={{ pointerEvents }} className="stroke-black hover:stroke-blue-400" />
             ) : line.type === "circle" ? (
-              <circle {...line} fill="none" stroke="black" key={k} style={{ pointerEvents: "none" }} />
+              <circle {...line} fill="none" stroke="black" key={k} style={{ pointerEvents }} />
             ) : (
-              <rect {...line} fill="none" stroke="black" key={k} style={{ pointerEvents: "none" }} />
+              <rect {...line} fill="none" stroke="black" key={k} style={{ pointerEvents }} />
             )
           )}
           {draftShape?.type === "line" && <line {...draftShape} stroke="#00000044" style={{ pointerEvents: "none" }} />}
           {draftShape?.type === "circle" && (
             <circle {...draftShape} fill="none" stroke="#00000044" style={{ pointerEvents: "none" }} />
+          )}
+          {draftShape?.type === "rect" && (
+            <rect {...draftShape} fill="none" stroke="#00000044" style={{ pointerEvents: "none" }} />
           )}
         </svg>
       </div>
