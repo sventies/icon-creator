@@ -25,6 +25,14 @@ interface DraftLine {
   y1: number;
 }
 
+interface Rect {
+  type: "rect";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 const SIZE = 24;
 const STROKE_WIDTH = 2;
 const ARRAY = Array.from({ length: SIZE + 1 }, () => Array.from({ length: SIZE + 1 }, (_, j) => j));
@@ -33,7 +41,7 @@ const getDraft: (
   hovered: [number, number] | null,
   draftPoint: DraftLine | null,
   shapeMode: "line" | "circle" | "rect"
-) => Line | Circle | null = (hovered, draftPoint, shapeMode) => {
+) => Line | Circle | Rect | null = (hovered, draftPoint, shapeMode) => {
   if (!hovered) return null;
   if (!draftPoint) {
     switch (shapeMode) {
@@ -54,6 +62,19 @@ const getDraft: (
         cy: draftPoint.y1,
         r: Math.hypot(draftPoint.x1 - hovered[0], draftPoint.y1 - hovered[1]),
       };
+    case "rect": {
+      const maxX = Math.max(hovered[0], draftPoint.x1);
+      const maxY = Math.max(hovered[1], draftPoint.y1);
+      const minX = Math.min(hovered[0], draftPoint.x1);
+      const minY = Math.min(hovered[1], draftPoint.y1);
+      return {
+        type: "rect" as const,
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+      };
+    }
   }
 
   return null;
@@ -62,7 +83,7 @@ const getDraft: (
 const IconCreator: FC<Props> = () => {
   const [shapeMode, setShapeMode] = useState<"line" | "circle" | "rect">("line");
   const [draftPoint, setDraftPoint] = useState<DraftLine | null>(null);
-  const [lines, setLines] = useState<(Line | Circle)[]>([]);
+  const [lines, setLines] = useState<(Line | Circle | Rect)[]>([]);
   const [hovered, setHovered] = useState<[number, number] | null>(null);
   const [startXY, setStartXY] = useState([0, 0]);
 
@@ -86,7 +107,7 @@ const IconCreator: FC<Props> = () => {
   return (
     <>
       <div>
-        <Buttons setShapeMode={setShapeMode} />
+        <Buttons setShapeMode={setShapeMode} shapeMode={shapeMode} />
         {/* <div className="flex flex-row">
           <Button onClick={() => setShapeMode("line")}>L</Button>
           <Button onClick={() => setShapeMode("circle")}>C</Button>
@@ -162,8 +183,10 @@ const IconCreator: FC<Props> = () => {
           {lines.map((line, k) =>
             line.type === "line" ? (
               <line {...line} stroke="black" key={k} style={{ pointerEvents: "none" }} />
-            ) : (
+            ) : line.type === "circle" ? (
               <circle {...line} fill="none" stroke="black" key={k} style={{ pointerEvents: "none" }} />
+            ) : (
+              <rect {...line} fill="none" stroke="black" key={k} style={{ pointerEvents: "none" }} />
             )
           )}
           {draftShape?.type === "line" && <line {...draftShape} stroke="#00000044" style={{ pointerEvents: "none" }} />}
