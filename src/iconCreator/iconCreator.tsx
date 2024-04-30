@@ -1,5 +1,6 @@
 import { FC, useState } from "react";
 import HelperShapes from "./helperShapes";
+import Button from "./button";
 
 interface Props {}
 
@@ -20,36 +21,35 @@ const STROKE_WIDTH = 2;
 const ARRAY = Array.from({ length: SIZE + 1 }, () => Array.from({ length: SIZE + 1 }, (_, j) => j));
 
 const IconCreator: FC<Props> = () => {
-  const [draftLine, setDraftLine] = useState<DraftLine | null>(null);
+  const [shapeMode, setShapeMode] = useState<"line" | "circle" | "rect">("line");
+  const [draftPoint, setDraftPoint] = useState<DraftLine | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [hovered, setHovered] = useState<[number, number] | null>(null);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [xy, setXy] = useState({ x: 0, y: 0 });
   const [startXY, setStartXY] = useState([0, 0]);
 
   const onClick = (i: number, j: number) => {
-    if (!draftLine) {
-      setDraftLine({ x1: i, y1: j });
+    if (!draftPoint) {
+      setDraftPoint({ x1: i, y1: j });
       return;
     }
-    setLines((prev) => [...prev, { ...draftLine, x2: i, y2: j }]);
-    setDraftLine(null);
+    setLines((prev) => [...prev, { ...draftPoint, x2: i, y2: j }]);
+    setDraftPoint(null);
   };
 
-  const hoveredCoords = hovered
-    ? draftLine
-      ? { x1: draftLine.x1, y1: draftLine.y1, x2: hovered[0], y2: hovered[1] }
+  const hoveredLine = hovered
+    ? draftPoint
+      ? shapeMode === "line"
+        ? { x1: draftPoint.x1, y1: draftPoint.y1, x2: hovered[0], y2: hovered[1] }
+        : null
       : { x1: hovered[0], y1: hovered[1], x2: hovered[0], y2: hovered[1] }
     : null;
 
   return (
     <>
-      <div style={{ color: "green" }}>{offset.x + " " + offset.y}</div>
-      <div style={{ color: "pink" }}>{xy.x + " " + xy.y}</div>
       <div className="flex flex-row">
-        <div>L</div>
-        <div>C</div>
-        <div>R</div>
+        <Button onClick={() => setShapeMode("line")}>L</Button>
+        <Button onClick={() => setShapeMode("circle")}>C</Button>
+        <Button onClick={() => setShapeMode("rect")}>R</Button>
       </div>
       <div
         style={{
@@ -67,6 +67,7 @@ const IconCreator: FC<Props> = () => {
             width: "100%",
             height: "100%",
             touchAction: "none",
+            backgroundColor: "white",
           }}
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           stroke="currentColor"
@@ -102,17 +103,11 @@ const IconCreator: FC<Props> = () => {
                   const node = e.target as HTMLElement;
                   const parent = node.parentElement as HTMLElement;
                   const parentRect = parent.getBoundingClientRect();
-                  const rect = node.getBoundingClientRect();
-                  if (!rect) return;
                   const location = e.targetTouches[0];
-                  const offsetLeft = node.offsetLeft;
-                  const offsetTop = node.offsetTop;
-                  setOffset({ x: offsetLeft, y: offsetTop });
-                  const xx = location.clientX - startXY[0];
-                  const yy = location.clientY - startXY[1];
-                  setXy({ x: xx, y: yy });
-                  const _i = Math.round((xx / parentRect.width) * SIZE);
-                  const _j = Math.round((yy / parentRect.height) * SIZE);
+                  const x = location.clientX - startXY[0];
+                  const y = location.clientY - startXY[1];
+                  const _i = Math.round((x / parentRect.width) * SIZE);
+                  const _j = Math.round((y / parentRect.height) * SIZE);
                   setHovered([_i + i, _j + j]);
                 }}
                 onMouseLeave={() => setHovered(null)}
@@ -128,10 +123,16 @@ const IconCreator: FC<Props> = () => {
           {lines.map((line, k) => (
             <line {...line} stroke="black" key={k} style={{ pointerEvents: "none" }} />
           ))}
-          {draftLine && (
-            <line {...draftLine} x2={draftLine.x1} y2={draftLine.y1} stroke="black" style={{ pointerEvents: "none" }} />
+          {draftPoint && (
+            <line
+              {...draftPoint}
+              x2={draftPoint.x1}
+              y2={draftPoint.y1}
+              stroke="black"
+              style={{ pointerEvents: "none" }}
+            />
           )}
-          {hoveredCoords && <line {...hoveredCoords} stroke="#00000044" style={{ pointerEvents: "none" }} />}
+          {hoveredLine && <line {...hoveredLine} stroke="#00000044" style={{ pointerEvents: "none" }} />}
         </svg>
       </div>
     </>
