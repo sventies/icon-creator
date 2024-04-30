@@ -1,6 +1,7 @@
 import { FC, useEffect, useState } from "react";
 import HelperShapes from "./helperShapes";
-import Button from "./button";
+// import Button from "./buttons";
+import Buttons from "./buttons";
 
 interface Props {}
 
@@ -33,28 +34,29 @@ const getDraft: (
   draftPoint: DraftLine | null,
   shapeMode: "line" | "circle" | "rect"
 ) => Line | Circle | null = (hovered, draftPoint, shapeMode) => {
-  const draftLine = hovered
-    ? draftPoint
-      ? shapeMode === "line"
-        ? { type: "line" as const, x1: draftPoint.x1, y1: draftPoint.y1, x2: hovered[0], y2: hovered[1] }
-        : null
-      : { type: "line" as const, x1: hovered[0], y1: hovered[1], x2: hovered[0], y2: hovered[1] }
-    : null;
+  if (!hovered) return null;
+  if (!draftPoint) {
+    switch (shapeMode) {
+      case "circle":
+      case "line":
+      case "rect":
+        return { type: "line" as const, x1: hovered[0], y1: hovered[1], x2: hovered[0], y2: hovered[1] };
+    }
+  }
 
-  const draftCircle = hovered
-    ? draftPoint
-      ? shapeMode === "circle"
-        ? {
-            type: "circle" as const,
-            cx: draftPoint.x1,
-            cy: draftPoint.y1,
-            r: Math.hypot(draftPoint.x1 - hovered[0], draftPoint.y1 - hovered[1]),
-          }
-        : null
-      : { type: "circle" as const, cx: hovered[0], cy: hovered[1], r: 0 }
-    : null;
+  switch (shapeMode) {
+    case "line":
+      return { type: "line" as const, x1: draftPoint.x1, y1: draftPoint.y1, x2: hovered[0], y2: hovered[1] };
+    case "circle":
+      return {
+        type: "circle" as const,
+        cx: draftPoint.x1,
+        cy: draftPoint.y1,
+        r: Math.hypot(draftPoint.x1 - hovered[0], draftPoint.y1 - hovered[1]),
+      };
+  }
 
-  return draftLine || draftCircle || null;
+  return null;
 };
 
 const IconCreator: FC<Props> = () => {
@@ -84,22 +86,21 @@ const IconCreator: FC<Props> = () => {
   return (
     <>
       <div>
-        <div className="flex flex-row">
+        <Buttons setShapeMode={setShapeMode} />
+        {/* <div className="flex flex-row">
           <Button onClick={() => setShapeMode("line")}>L</Button>
           <Button onClick={() => setShapeMode("circle")}>C</Button>
           <Button onClick={() => setShapeMode("rect")}>R</Button>
-        </div>
+        </div> */}
       </div>
       <div
         style={{
-          // transform: "translateX(-12px)",
           width: "min(100vw, 480px)",
           height: "min(100vw, 480px)",
           margin: "auto",
           border: "1px solid black",
           userSelect: "none",
         }}
-        onTouchStart={(e) => e.preventDefault()}
       >
         <svg
           style={{
@@ -138,7 +139,6 @@ const IconCreator: FC<Props> = () => {
                   setHovered([i, j]);
                 }}
                 onTouchMove={(e) => {
-                  e.preventDefault();
                   const node = e.target as HTMLElement;
                   const parent = node.parentElement as HTMLElement;
                   const parentRect = parent.getBoundingClientRect();
@@ -165,15 +165,6 @@ const IconCreator: FC<Props> = () => {
             ) : (
               <circle {...line} fill="none" stroke="black" key={k} style={{ pointerEvents: "none" }} />
             )
-          )}
-          {draftPoint && (
-            <line
-              {...draftPoint}
-              x2={draftPoint.x1}
-              y2={draftPoint.y1}
-              stroke="black"
-              style={{ pointerEvents: "none" }}
-            />
           )}
           {draftShape?.type === "line" && <line {...draftShape} stroke="#00000044" style={{ pointerEvents: "none" }} />}
           {draftShape?.type === "circle" && (
