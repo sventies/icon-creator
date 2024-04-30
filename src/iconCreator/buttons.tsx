@@ -1,5 +1,14 @@
 import { FC, ReactNode } from "react";
-import { Minus, Circle, Square, MousePointer, Undo, Redo, Eraser, Clipboard } from "lucide-react";
+import {
+  Minus,
+  Circle,
+  Square,
+  // MousePointer,
+  Undo,
+  Redo,
+  Eraser,
+  Clipboard,
+} from "lucide-react";
 
 interface Props {
   setShapeMode: (mode: ShapeMode) => void;
@@ -10,8 +19,6 @@ interface Props {
   isLast: boolean;
   onCopy: () => void;
 }
-
-export type ShapeMode = "line" | "circle" | "rect" | "pointer" | "eraser";
 
 const BUTTON_SIZE = 44;
 
@@ -30,9 +37,9 @@ const Buttons: FC<Props> = ({ setShapeMode, shapeMode, onUndo, onRedo, isFirst, 
 
       <Divider />
 
-      <Button isActive={shapeMode === "pointer"} onClick={() => setShapeMode("pointer")}>
+      {/* <Button isActive={shapeMode === "pointer"} onClick={() => setShapeMode("pointer")}>
         <MousePointer size={16} />
-      </Button>
+      </Button> */}
       <Button isActive={shapeMode === "eraser"} onClick={() => setShapeMode("eraser")}>
         <Eraser size={16} />
       </Button>

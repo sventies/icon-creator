@@ -2,6 +2,7 @@ import { FC, useEffect, useState } from "react";
 import HelperShapes from "./helperShapes";
 import Buttons from "./buttons";
 import Shapes from "./shapes";
+import DraftShape from "./draftShape";
 
 interface Props {}
 
@@ -86,14 +87,6 @@ const IconCreator: FC<Props> = () => {
   };
 
   const draftShape = getDraft(hovered, draftPoint, shapeMode);
-
-  // const pointerEvents = shapeMode === "pointer" || shapeMode === "eraser" ? "all" : "none";
-  // const className =
-  //   shapeMode === "pointer"
-  //     ? "stroke-black hover:stroke-blue-500"
-  //     : shapeMode === "eraser"
-  //     ? "stroke-black hover:stroke-red-500"
-  //     : "stroke-black";
 
   const onUndo = () =>
     setTempI((prev) => {
@@ -217,52 +210,15 @@ ${shapes
           )}
           <HelperShapes size={SIZE} array={ARRAY} strokeWidth={STROKE_WIDTH} />
           <Shapes shapes={shapes} shapeMode={shapeMode} onShapeClick={onShapeClick} />
-          {/* {shapes.map((line, k) =>
-            line.type === "line" ? (
-              <line
-                {...line}
-                key={k}
-                style={{ pointerEvents, cursor: "pointer" }}
-                className={className}
-                onClick={() => onShapeClick(k)}
-              />
-            ) : line.type === "circle" ? (
-              <circle
-                {...line}
-                fill="none"
-                stroke="black"
-                key={k}
-                style={{ pointerEvents, cursor: "pointer" }}
-                className={className}
-                onClick={() => onShapeClick(k)}
-              />
-            ) : (
-              <rect
-                {...line}
-                fill="none"
-                stroke="black"
-                key={k}
-                style={{ pointerEvents, cursor: "pointer" }}
-                className={className}
-                onClick={() => onShapeClick(k)}
-              />
-            )
-          )} */}
-          {draftShape?.type === "line" && <line {...draftShape} stroke="#00000044" style={{ pointerEvents: "none" }} />}
-          {draftShape?.type === "circle" && (
-            <circle {...draftShape} fill="none" stroke="#00000044" style={{ pointerEvents: "none" }} />
-          )}
-          {draftShape?.type === "rect" && (
-            <rect {...draftShape} fill="none" stroke="#00000044" style={{ pointerEvents: "none" }} />
-          )}
+          <DraftShape draftShape={draftShape} />
         </svg>
-        <div style={{ display: "block" }}>
+        <div className="flex m-1 justify-center">
           <div
-            style={{ height: 56, background: "#f6f6f7", color: "black" }}
-            className="rounded flex items-center justify-center"
+            style={{ height: 44, color: "black", background: "#f6f6f7", paddingLeft: 20 }}
+            className="flex items-center justify-center rounded"
           >
             <span>Preview:</span>
-            <div style={{ width: 56, height: 56 }} className="flex items-center justify-center">
+            <div style={{ width: 44, height: 44 }} className="flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -273,7 +229,7 @@ ${shapes
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <Shapes shapes={shapes} shapeMode={shapeMode} onShapeClick={onShapeClick} />
               </svg>
             </div>
           </div>

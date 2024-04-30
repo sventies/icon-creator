@@ -2,8 +2,6 @@ import { FC } from "react";
 
 interface Props {
   draftShape: Shape | null;
-  //   array: number[][];
-  //   strokeWidth: number;
 }
 
 const DraftShape: FC<Props> = ({ draftShape }) => {
