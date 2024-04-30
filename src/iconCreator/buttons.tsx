@@ -1,23 +1,23 @@
 import { FC, ReactNode } from "react";
-import { Minus, Circle, Square, MousePointer, Undo, Redo } from "lucide-react";
+import { Minus, Circle, Square, MousePointer, Undo, Redo, Eraser, Clipboard } from "lucide-react";
 
 interface Props {
-  setShapeMode: (mode: "line" | "circle" | "rect" | "pointer") => void;
-  shapeMode: "line" | "circle" | "rect" | "pointer";
+  setShapeMode: (mode: ShapeMode) => void;
+  shapeMode: ShapeMode;
   onUndo: () => void;
   onRedo: () => void;
   isFirst: boolean;
   isLast: boolean;
+  onCopy: () => void;
 }
+
+export type ShapeMode = "line" | "circle" | "rect" | "pointer" | "eraser";
 
 const BUTTON_SIZE = 44;
 
-const Buttons: FC<Props> = ({ setShapeMode, shapeMode, onUndo, onRedo, isFirst, isLast }) => {
+const Buttons: FC<Props> = ({ setShapeMode, shapeMode, onUndo, onRedo, isFirst, isLast, onCopy }) => {
   return (
     <div className="flex flex-row m-auto rounded" style={{ overflow: "hidden" }}>
-      <Button isActive={shapeMode === "pointer"} onClick={() => setShapeMode("pointer")}>
-        <MousePointer size={16} />
-      </Button>
       <Button isActive={shapeMode === "line"} onClick={() => setShapeMode("line")}>
         <Minus size={16} />
       </Button>
@@ -27,12 +27,29 @@ const Buttons: FC<Props> = ({ setShapeMode, shapeMode, onUndo, onRedo, isFirst, 
       <Button isActive={shapeMode === "rect"} onClick={() => setShapeMode("rect")}>
         <Square size={16} />
       </Button>
+
       <Divider />
+
+      <Button isActive={shapeMode === "pointer"} onClick={() => setShapeMode("pointer")}>
+        <MousePointer size={16} />
+      </Button>
+      <Button isActive={shapeMode === "eraser"} onClick={() => setShapeMode("eraser")}>
+        <Eraser size={16} />
+      </Button>
+
+      <Divider />
+
       <Button onClick={onUndo} isDisabled={isFirst}>
         <Undo size={16} />
       </Button>
       <Button onClick={onRedo} isDisabled={isLast}>
         <Redo size={16} />
+      </Button>
+
+      <Divider />
+
+      <Button onClick={onCopy}>
+        <Clipboard size={16} />
       </Button>
     </div>
   );

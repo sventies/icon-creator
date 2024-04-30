@@ -1,46 +1,19 @@
 import { FC, useEffect, useState } from "react";
 import HelperShapes from "./helperShapes";
 import Buttons from "./buttons";
+import Shapes from "./shapes";
 
 interface Props {}
-
-interface Line {
-  type: "line";
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
-
-interface Circle {
-  type: "circle";
-  cx: number;
-  cy: number;
-  r: number;
-}
-
-interface Point {
-  x1: number;
-  y1: number;
-}
-
-interface Rect {
-  type: "rect";
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 
 const SIZE = 24;
 const STROKE_WIDTH = 2;
 const ARRAY = Array.from({ length: SIZE + 1 }, () => Array.from({ length: SIZE + 1 }, (_, j) => j));
 
-const getDraft: (
-  hovered: [number, number] | null,
-  draftPoint: Point | null,
-  shapeMode: "line" | "circle" | "rect" | "pointer"
-) => Line | Circle | Rect | null = (hovered, draftPoint, shapeMode) => {
+const getDraft: (hovered: [number, number] | null, draftPoint: Point | null, shapeMode: ShapeMode) => Shape | null = (
+  hovered,
+  draftPoint,
+  shapeMode
+) => {
   if (!hovered) return null;
   if (!draftPoint) {
     switch (shapeMode) {
@@ -81,7 +54,7 @@ const getDraft: (
 };
 
 const IconCreator: FC<Props> = () => {
-  const [shapeMode, setShapeMode] = useState<"line" | "circle" | "rect" | "pointer">("line");
+  const [shapeMode, setShapeMode] = useState<ShapeMode>("line");
   const [draftPoint, setDraftPoint] = useState<Point | null>(null);
   const [temporalShapes, setTemporalShapes] = useState<(Line | Circle | Rect)[][]>([[]]);
   const [tempI, setTempI] = useState<number>(0);
@@ -114,7 +87,13 @@ const IconCreator: FC<Props> = () => {
 
   const draftShape = getDraft(hovered, draftPoint, shapeMode);
 
-  const pointerEvents = shapeMode === "pointer" ? "all" : "none";
+  // const pointerEvents = shapeMode === "pointer" || shapeMode === "eraser" ? "all" : "none";
+  // const className =
+  //   shapeMode === "pointer"
+  //     ? "stroke-black hover:stroke-blue-500"
+  //     : shapeMode === "eraser"
+  //     ? "stroke-black hover:stroke-red-500"
+  //     : "stroke-black";
 
   const onUndo = () =>
     setTempI((prev) => {
@@ -129,6 +108,35 @@ const IconCreator: FC<Props> = () => {
     });
   };
 
+  const onShapeClick = (shapeIndex: number) => {
+    if (shapeMode === "eraser") {
+      setTemporalShapes((prev) => {
+        const newShapes = JSON.parse(JSON.stringify(shapes));
+        newShapes.splice(shapeIndex, 1);
+        return [...prev.slice(0, tempI + 1), newShapes];
+      });
+      setTempI((prev) => prev + 1);
+    }
+  };
+
+  const onCopy = () => {
+    const shapes = temporalShapes[tempI];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width"${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}" fill="none" stroke="currentColor" stroke-width="${STROKE_WIDTH}" stroke-linecap="round" stroke-linejoin="round">
+${shapes
+  .map((shape) => {
+    if (shape.type === "line") {
+      return `  <line x1="${shape.x1}" y1="${shape.y1}" x2="${shape.x2}" y2="${shape.y2}" stroke="black" />`;
+    } else if (shape.type === "circle") {
+      return `  <circle cx="${shape.cx}" cy="${shape.cy}" r="${shape.r}" fill="none" stroke="black" />`;
+    } else {
+      return `  <rect x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}" />`;
+    }
+  })
+  .join("\n")}
+</svg>`;
+    navigator.clipboard.writeText(svg);
+  };
+
   return (
     <>
       <div className="p-2 flex items-center">
@@ -139,6 +147,7 @@ const IconCreator: FC<Props> = () => {
           onRedo={onRedo}
           isFirst={tempI === 0}
           isLast={tempI === temporalShapes.length - 1}
+          onCopy={onCopy}
         />
       </div>
       <div
@@ -207,15 +216,38 @@ const IconCreator: FC<Props> = () => {
             ))
           )}
           <HelperShapes size={SIZE} array={ARRAY} strokeWidth={STROKE_WIDTH} />
-          {shapes.map((line, k) =>
+          <Shapes shapes={shapes} shapeMode={shapeMode} onShapeClick={onShapeClick} />
+          {/* {shapes.map((line, k) =>
             line.type === "line" ? (
-              <line {...line} key={k} style={{ pointerEvents }} className="stroke-black hover:stroke-blue-400" />
+              <line
+                {...line}
+                key={k}
+                style={{ pointerEvents, cursor: "pointer" }}
+                className={className}
+                onClick={() => onShapeClick(k)}
+              />
             ) : line.type === "circle" ? (
-              <circle {...line} fill="none" stroke="black" key={k} style={{ pointerEvents }} />
+              <circle
+                {...line}
+                fill="none"
+                stroke="black"
+                key={k}
+                style={{ pointerEvents, cursor: "pointer" }}
+                className={className}
+                onClick={() => onShapeClick(k)}
+              />
             ) : (
-              <rect {...line} fill="none" stroke="black" key={k} style={{ pointerEvents }} />
+              <rect
+                {...line}
+                fill="none"
+                stroke="black"
+                key={k}
+                style={{ pointerEvents, cursor: "pointer" }}
+                className={className}
+                onClick={() => onShapeClick(k)}
+              />
             )
-          )}
+          )} */}
           {draftShape?.type === "line" && <line {...draftShape} stroke="#00000044" style={{ pointerEvents: "none" }} />}
           {draftShape?.type === "circle" && (
             <circle {...draftShape} fill="none" stroke="#00000044" style={{ pointerEvents: "none" }} />
@@ -224,6 +256,28 @@ const IconCreator: FC<Props> = () => {
             <rect {...draftShape} fill="none" stroke="#00000044" style={{ pointerEvents: "none" }} />
           )}
         </svg>
+        <div style={{ display: "block" }}>
+          <div
+            style={{ height: 56, background: "#f6f6f7", color: "black" }}
+            className="rounded flex items-center justify-center"
+          >
+            <span>Preview:</span>
+            <div style={{ width: 56, height: 56 }} className="flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
