@@ -1,5 +1,6 @@
 import { FC } from "react";
 
+const MANY_HELPERS = false;
 interface Props {
   size: number;
   array: number[][];
@@ -11,9 +12,13 @@ const HelperShapes: FC<Props> = ({ size, array, strokeWidth }) => {
   return (
     <g style={{ pointerEvents: "none" }}>
       <Grid array={array} size={size} />
-      <RectBig rx={rx} />
-      <RectHigh rx={rx} />
-      <RectWide rx={rx} />
+      {MANY_HELPERS && (
+        <>
+          <RectBig rx={rx} />
+          <RectHigh rx={rx} />
+          <RectWide rx={rx} />
+        </>
+      )}
       <RectMid rx={rx} />
       <Circle r={10} />
     </g>
@@ -51,8 +56,8 @@ const Grid: FC<{ array: number[][]; size: number }> = ({ array, size }) => {
             x2={i}
             y1={0}
             y2={size}
-            stroke="gray"
-            strokeWidth="0.03"
+            stroke={i % 2 ? "lightgray" : "gray"}
+            strokeWidth={i % 2 ? "0.03" : "0.06"}
             style={{ pointerEvents: "none" }}
           />
         ) : null
@@ -65,8 +70,8 @@ const Grid: FC<{ array: number[][]; size: number }> = ({ array, size }) => {
             y2={j}
             x1={0}
             x2={size}
-            stroke="gray"
-            strokeWidth="0.03"
+            stroke={j % 2 ? "lightgray" : "gray"}
+            strokeWidth={j % 2 ? "0.03" : "0.06"}
             style={{ pointerEvents: "none" }}
           />
         ) : null
